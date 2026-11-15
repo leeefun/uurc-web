@@ -1,0 +1,43 @@
+name: Sync upstream
+
+# 只做一件事：把上游合并进本 fork。
+# 构建和部署由 Cloudflare 自己的 Git 集成负责，这里不跑任何部署命令。
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-upstream
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: github.repository_owner == 'Leexunhuan743'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      REPO: ${{ github.repository }}
+      UPSTREAM_OWNER: ddaodan
+      UPSTREAM_REPO: uurc-web
+      BRANCH: main
+    steps:
+      - name: Merge upstream into this fork
+        run: |
+          set -euo pipefail
+          echo "Syncing ${UPSTREAM_OWNER}/${UPSTREAM_REPO}:${BRANCH} -> ${REPO}:${BRANCH}"
+          if ! response=$(gh api -X POST "repos/${REPO}/merge-upstream" -f branch="${BRANCH}"); then
+            echo "::error::merge-upstream failed; usually merge conflicts. Resolve manually in the fork."
+            exit 1
+          fi
+          echo "${response}"
+          {
+            echo "### Sync result"
+            echo '```json'
+            echo "${response}"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
