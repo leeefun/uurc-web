@@ -39,4 +39,6 @@
   "observability": {
     "enabled": true,
   },
+  // 关闭 workers.dev 子域，只保留 uurc.141425.xyz 自定义域名
+  "workers_dev": false,
 }
